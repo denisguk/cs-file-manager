@@ -4,6 +4,11 @@ import { FileModule } from './modules/file/file.module';
 
 async function bootstrap() {
   const app = await NestFactory.create(FileModule);
+  app.enableCors({
+    origin: '*',
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    credentials: true,
+  });
 
   const config = new DocumentBuilder()
     .setTitle('File Manager')

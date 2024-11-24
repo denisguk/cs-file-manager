@@ -4,9 +4,9 @@ import { FileService } from './file.service';
 import { multerConfig } from '@config/multer.config';
 import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiQuery } from '@nestjs/swagger';
 
-@ApiTags('app')
-@Controller('app')
-@Controller('app')
+@ApiTags('api')
+@Controller('api')
+@Controller('api')
 export class FileController {
   constructor(private readonly fileService: FileService) {}
 
@@ -44,5 +44,12 @@ export class FileController {
   @ApiQuery({ name: 'folderName', required: false, description: 'Name of the folder' })
   listFiles(@Query('folderName') folderName: string) {
     return this.fileService.listFiles(folderName);
+  }
+
+  @Get('folder/tree')
+  @ApiOperation({ summary: 'Get folder tree' })
+  @ApiResponse({ status: 200, description: 'Folder tree retrieved successfully' })
+  getFolderTree() {
+    return this.fileService.getFolderTree();
   }
 }

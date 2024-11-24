@@ -6,14 +6,13 @@ import { FileGateway } from './file.gateway';
 @Injectable()
 export class FileService {
 
+  private rootDir = path.join(process.cwd(), 'root');
   private uploadProgress = new Map<string, { uploadedChunks: number, totalChunks: number }>();
 
-  constructor(private readonly fileGateway: FileGateway) {
-  }
-
+  constructor(private readonly fileGateway: FileGateway) {}
 
   async createFolder(folderName: string) {
-    const folderPath = path.join(process.cwd(), 'uploads', folderName);
+    const folderPath = path.join(this.rootDir);
 
     try {
       if (fs.existsSync(folderPath)) {
@@ -28,7 +27,8 @@ export class FileService {
   }
 
   async listFiles(folderName: string) {
-    const folderPath = path.join(process.cwd(), 'uploads', folderName || '');
+    const folder = folderName.replace('root', '');
+    const folderPath = path.join(this.rootDir, folder);
     try {
       const files = await fs.readdir(folderPath, { withFileTypes: true });
 
@@ -37,18 +37,31 @@ export class FileService {
         const stats = fs.statSync(filePath);
         return {
           name: file.name,
-          type: file.isDirectory() ? 'folder' : 'file',
+          type: file.isDirectory() ? 'folder' : path.extname(file.name).slice(1),
           size: stats.size,
           createdDate: stats.birthtime,
         };
       });
     } catch (error) {
+      console.log(error);
       return { error: 'Error reading directory' };
     }
   }
 
+  getFolderTree(dirPath: string = this.rootDir): any {
+    const stats = fs.statSync(dirPath);
+    if (stats.isDirectory()) {
+      const children = fs.readdirSync(dirPath)
+        .map(child => path.join(dirPath, child))
+        .filter(childPath => fs.statSync(childPath).isDirectory())
+        .map(childDir => this.getFolderTree(childDir));
+      return { name: path.basename(dirPath), children };
+    }
+    return null;
+  }
+
   async uploadChunk(chunk: Buffer, chunkNumber: number, totalChunks: number, fileName: string) {
-    const filePath = path.join(process.cwd(), 'uploads', fileName);
+    const filePath = path.join(this.rootDir, fileName);
 
     try {
       await fs.appendFile(filePath, chunk);
